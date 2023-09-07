@@ -1,0 +1,246 @@
+<?php
+/**
+ * Plugin Name: OTP Send and Verify
+ * Plugin URI: https://example.com/
+ * Description: This plugin sends and verifies OTP during user login.
+ * Version: 1.0.0
+ * Author: Your Name
+ * Author URI: https://example.com/
+ **/
+
+// Enqueue scripts and styles
+function otp_send_verify_scripts() {
+    echo '<style>.otp-input {padding: 10px; border: 1px solid #ccc; margin-bottom: 10px;}</style>';
+}
+add_action('wp_head', 'otp_send_verify_scripts');
+
+// Process OTP verification
+function otp_verify_process() {
+    $otp = $_POST['otp'];
+    $user_email = $_POST['user_email'];
+    $otp_sent = get_user_meta(get_user_by('email', $user_email)->ID, 'otp_sent', true);
+    if ($otp == $otp_sent) {
+        delete_user_meta(get_user_by('email', $user_email)->ID, 'otp_sent');
+        echo 'OTP verified successfully';
+    } else {
+        echo 'Invalid OTP';
+    }
+    die();
+}
+add_action('wp_ajax_otp_verify', 'otp_verify_process');
+add_action('wp_ajax_nopriv_otp_verify', 'otp_verify_process');
+
+// Process user login
+function otp_send_verify_login($user_login, $user) {
+    $otp = rand(100000, 999999);
+    $user = get_user_by('login',  $user);
+    print_r($user->ID);
+    $user_email = $user->user_email;
+    update_user_meta($user->ID, 'otp_sent', $otp);
+    $subject = 'OTP for login';
+    $message = 'Your OTP for login is ' . $otp;
+    wp_mail($user_email, $subject, $message);
+    echo '<div class="otp-form">';
+    echo '<p>An OTP has been sent to your email. Please enter it below to continue.</p>';
+    echo '<input type="email" name="user_email" value="' . $user_email . '" hidden>';
+    echo '<input type="text" name="otp" placeholder="Enter OTP" class="otp-input">';
+    echo '<button id="otp-verify-btn">Verify OTP</button>';
+    echo '</div>';
+}
+add_filter('wp_authenticate_user', 'otp_send_verify_login', 10, 2);
+
+
+add_action('wp_login', 'send_otp_email');
+
+function send_otp_email($user_login){
+    // get user's email
+    $user = get_user_by('login', $user_login);
+    if ($user) {
+        $user_email = $user->user_email;
+        // debug information
+        error_log("User email: " . $user_email);
+    } else {
+        error_log("User not found");
+        return;
+    }
+
+    // generate OTP
+    $otp = rand(100000, 999999);
+
+    // save OTP in user meta
+    update_user_meta($user->ID, 'otp', $otp);
+
+    // send OTP to user's email
+    $to = $user_email;
+    $subject = 'Your OTP for Login Verification';
+    $message = 'Your OTP is: ' . $otp;
+    wp_mail($to, $subject, $message);
+}
+
+// add action to verify OTP on login
+add_action('wp_authenticate', 'verify_otp_login', 10, 2);
+
+function verify_otp_login($username, $password){
+    // check if OTP is submitted
+    if(isset($_POST['otp'])){
+        $otp = $_POST['otp'];
+        $user = get_user_by('login', $username);
+        // get saved OTP from user meta
+        $saved_otp = get_user_meta($user->ID, 'otp', true);
+        // compare OTPs
+        if($otp == $saved_otp){
+            // OTP is valid
+            return;
+        } else {
+            // OTP is not valid
+            wp_die('Invalid OTP. Please try again.');
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<?php
+/**
+ * Plugin Name: OTP Send and Verify
+ * Plugin URI: https://example.com/
+ * Description: This plugin sends and verifies OTP during user login.
+ * Version: 1.0.0
+ * Author: Your Name
+ * Author URI: https://example.com/
+ **/
+
+// Enqueue scripts and styles
+function otp_send_verify_scripts() {
+    echo "<style>.otp-input {padding: 10px; border: 1px solid #ccc; margin-bottom: 10px;}</style>
+    <script>
+    jQuery(document).ready(function($) {
+        $('#otp-verify-btn').click(function() {
+          $.ajax({
+            type: 'POST',
+            url: ajaxurl, // This is the WordPress AJAX URL
+            data: {
+              action: 'my_function', // This is the name of your plugin function
+              // Additional data you want to pass to the function
+            },
+            success: function(response) {
+              // Handle the response from the server
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+              // Handle errors
+            }
+          });
+        });
+      });
+      
+    </script>
+    ";
+}
+add_action('wp_footer', 'otp_send_verify_scripts');
+
+// Process OTP verification
+function otp_verify_process() {
+    $otp = $_POST['otp'];
+    $user_email = $_POST['user_email'];
+    $otp_sent = get_user_meta(get_user_by('email', $user_email)->ID, 'otp_sent', true);
+    if ($otp == $otp_sent) {
+        delete_user_meta(get_user_by('email', $user_email)->ID, 'otp_sent');
+        echo 'OTP verified successfully';
+    } else {
+        echo 'Invalid OTP';
+    }
+    die();
+}
+add_action('wp_ajax_otp_verify', 'otp_verify_process');
+add_action('wp_ajax_nopriv_otp_verify', 'otp_verify_process');
+
+// Process user login
+function otp_send_verify_login($user_login, $user) {
+    $otp = rand(100000, 999999);
+    $user = get_user_by('login',  $user);
+    print_r($user->ID);
+    $user_email = $user->user_email;
+    update_user_meta($user->ID, 'otp_sent', $otp);
+    $subject = 'OTP for login';
+    $message = 'Your OTP for login is ' . $otp;
+    wp_mail($user_email, $subject, $message);
+    echo '<div class="otp-form">';
+    echo '<p>An OTP has been sent to your email. Please enter it below to continue.</p>';
+    echo '<input type="email" name="user_email" value="' . $user_email . '" hidden>';
+    echo '<input type="text" name="otp" placeholder="Enter OTP" class="otp-input">';
+    echo '<button id="otp-verify-btn">Verify OTP</button>';
+    echo '</div>';
+}
+add_filter('wp_authenticate_user', 'otp_send_verify_login', 10, 2);
+
+
+add_action('wp_login', 'send_otp_email');
+
+function send_otp_email($user_login){
+    // get user's email
+    $user = get_user_by('login', $user_login);
+    if ($user) {
+        $user_email = $user->user_email;
+        // debug information
+        error_log("User email: " . $user_email);
+    } else {
+        error_log("User not found");
+        return;
+    }
+
+    // generate OTP
+    $otp = rand(100000, 999999);
+
+    // save OTP in user meta
+    update_user_meta($user->ID, 'otp', $otp);
+
+    // send OTP to user's email
+    $to = $user_email;
+    $subject = 'Your OTP for Login Verification';
+    $message = 'Your OTP is: ' . $otp;
+    wp_mail($to, $subject, $message);
+}
+
+// add action to verify OTP on login
+add_action('wp_authenticate', 'verify_otp_login', 10, 2);
+
+function verify_otp_login($username, $password){
+    // check if OTP is submitted
+    if(isset($_POST['otp'])){
+        $otp = $_POST['otp'];
+        $user = get_user_by('login', $username);
+        // get saved OTP from user meta
+        $saved_otp = get_user_meta($user->ID, 'otp', true);
+        // compare OTPs
+        if($otp == $saved_otp){
+            // OTP is valid
+            return;
+        } else {
+            // OTP is not valid
+            wp_die('Invalid OTP. Please try again.');
+        }
+    }
+}
+
+
+
+
